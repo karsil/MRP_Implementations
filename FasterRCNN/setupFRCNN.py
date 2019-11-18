@@ -46,11 +46,11 @@ def load_model(model_name):
 # LOADING USER MAP
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = '../../tf-models/models/research/object_detection/data/mscoco_label_map.pbtxt'
+PATH_TO_LABELS = '../../tf-models/research/object_detection/data/mscoco_label_map.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
 # If you want to test the code with your images, just add path to the images to the TEST_IMAGE_PATHS.
-PATH_TO_TEST_IMAGES_DIR = pathlib.Path('../../tf-models/models/research/object_detection/test_images')
+PATH_TO_TEST_IMAGES_DIR = pathlib.Path('../../tf-models/research/object_detection/test_images')
 TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
 TEST_IMAGE_PATHS
 
