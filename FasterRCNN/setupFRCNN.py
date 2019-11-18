@@ -40,7 +40,7 @@ def load_model(model_name):
 
     model_dir = pathlib.Path(model_dir)/"saved_model"
 
-    model = tf.saved_model.load(str(model_dir))
+    model = tf.saved_model.load(export_dir=str(model_dir), tags=None)
     model = model.signatures['serving_default']
 
     return model
