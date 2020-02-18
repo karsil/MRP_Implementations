@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# Detector using the TensorFlow Object Detection API
+
 import os
 import numpy as np
 import pathlib
@@ -12,7 +14,7 @@ import label_map_util
 PATH_TO_LABELS = './mscoco_label_map.pbtxt'
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
-print("TensorFlow version: ", tf.__version__)
+print("Using TensorFlow version: ", tf.__version__)
 
 def load_graph(frozen_graph_filename):
     # We load the protobuf file from the disk and parse it to retrieve the
@@ -37,18 +39,20 @@ def load_model(model_name):
     if not os.path.exists(downloadFolder):
         os.makedirs(downloadFolder)
 
-    print("Checking if not exists: " + downloadFolder + model_name)
     if not os.path.exists(downloadFolder + model_name):
-        # TODO. Also check if archive has been downloaded, but not extracted
+        print(model_name + " does not exists yet, downloading...")
+        # TODO. Also check if archive has been downloaded, but not extracted yet
         model_dir = tf.keras.utils.get_file(
             fname=downloadFolder + model_file,
             origin=base_url + model_file
             )
-        print("Extracting at " + downloadFolder + model_name)
+        print("Download done, extracting at " + downloadFolder + model_name + "...")
         tar = tarfile.open(model_dir, "r:gz")
         tar.extractall(downloadFolder)
         tar.close()
-        print("Extracted")
+        print("Extracted, removing archive...")
+        os.remove(downloadFolder + model_file)
+        print("Archive successfully removed.")
 
     else:
         model_dir = pathlib.Path(downloadFolder + model_name)
@@ -56,8 +60,7 @@ def load_model(model_name):
     model_dir = downloadFolder + model_name
     model_dir = pathlib.Path(model_dir)/"saved_model"
     model_dir = pathlib.Path(model_dir)
-    print("model_dir:")
-    print(model_dir)
+    print("Model saved at " + downloadFolder + model_name)
 
     model = tf.saved_model.load(export_dir=str(model_dir), tags=None)
     model = model.signatures['serving_default']
@@ -89,15 +92,15 @@ def run_inference_for_single_image(model, image):
     return output_dict
 
 
-def show_inference(model, image_path):
-  # the array based representation of the image will be used later in order to prepare the
-  # result image with boxes and labels on it.
-  image_np = np.array(Image.open(image_path))
+def show_inference(model, image_path, saveResult=False, image_name="result.jpg"):
+    # the array based representation of the image will be used later in order to prepare the
+    # result image with boxes and labels on it.
+    image_np = np.array(Image.open(image_path))
 
-  # Actual detection.
-  output_dict = run_inference_for_single_image(model, image_np)
-  # Visualization of the results of a detection.
-  vis_util.visualize_boxes_and_labels_on_image_array(
+    # Actual detection.
+    output_dict = run_inference_for_single_image(model, image_np)
+    # Visualization of the results of a detection.
+    vis_util.visualize_boxes_and_labels_on_image_array(
       image_np,
       output_dict['detection_boxes'],
       output_dict['detection_classes'],
@@ -107,8 +110,15 @@ def show_inference(model, image_path):
       use_normalized_coordinates=True,
       line_thickness=8)
 
-  img = Image.fromarray(image_np)
-  img.save('result.png')
+    if saveResult:
+        img = Image.fromarray(image_np)
+        outputFolder = os.getcwd() + '/results/'
+        if not os.path.exists(outputFolder):
+            os.makedirs(outputFolder)
+        outputPath = outputFolder + image_name
+        img.save(outputPath)
+        print("Result stored at " + outputPath)
+
 
 if __name__ == '__main__':
     # patch tf1 into `utils.ops`
@@ -120,12 +130,16 @@ if __name__ == '__main__':
     model_name = 'faster_rcnn_inception_v2_coco_2018_01_28'
     detection_model = load_model(model_name)
 
-    print("inputs: ", detection_model.inputs)
+    # print("inputs: ", detection_model.inputs)
 
-    print("detection_model.output_dtypes: ", detection_model.output_dtypes)
+    # print("detection_model.output_dtypes: ", detection_model.output_dtypes)
 
-    print("detection_model.output_shapes: ", detection_model.output_shapes)
+    # print("detection_model.output_shapes: ", detection_model.output_shapes)
 
-    image_path = './images/dogs.jpg'
-    show_inference(detection_model, image_path)
+    PATH_TO_TEST_IMAGES_DIR = pathlib.Path('./images')
+    TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
+
+    for image_path in TEST_IMAGE_PATHS:
+        head, tail = os.path.split(image_path)
+        show_inference(detection_model, image_path, True, tail)
 
