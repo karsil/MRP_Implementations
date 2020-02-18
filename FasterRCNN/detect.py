@@ -117,8 +117,7 @@ if __name__ == '__main__':
     # Patch the location of gfile (needed in label_map_util, does not overwrite right know?)
     #tf.gfile = tf.io.gfile
 
-    #model_name = 'faster_rcnn_resnet101_coco_11_06_2017'
-    model_name = 'ssd_mobilenet_v1_coco_2017_11_17'
+    model_name = 'faster_rcnn_inception_v2_coco_2018_01_28'
     detection_model = load_model(model_name)
 
     print("inputs: ", detection_model.inputs)
