@@ -8,13 +8,15 @@ import tarfile
 from PIL import Image
 import tensorflow as tf
 
-import visualization_utils as vis_util
-import label_map_util
+from core.config import cfg
 
-PATH_TO_LABELS = './mscoco_label_map.pbtxt'
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+from utils import label_map_util, visualization_utils as vis_util
 
 print("Using TensorFlow version: ", tf.__version__)
+
+# Setting up labels of trained model
+PATH_TO_LABELS = cfg.PRETRAINED_MODEL_LABELS
+category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
 def load_graph(frozen_graph_filename):
     # We load the protobuf file from the disk and parse it to retrieve the
@@ -34,7 +36,7 @@ def load_model(model_name):
     base_url = 'http://download.tensorflow.org/models/object_detection/'
     model_file = model_name + '.tar.gz'
 
-    downloadFolder = os.getcwd() + '/downloaded_models/'
+    downloadFolder = os.getcwd() + cfg.DOWNLOADED_MODELS_FOLDER
 
     if not os.path.exists(downloadFolder):
         os.makedirs(downloadFolder)
@@ -57,10 +59,11 @@ def load_model(model_name):
     else:
         model_dir = pathlib.Path(downloadFolder + model_name)
 
+    # Subfolder of downloaded model contains SavedModel
     model_dir = downloadFolder + model_name
-    model_dir = pathlib.Path(model_dir)/"saved_model"
+    model_dir = pathlib.Path(model_dir)/cfg.SAVED_MODEL_SUBFOLDER
     model_dir = pathlib.Path(model_dir)
-    print("Model saved at " + downloadFolder + model_name)
+    print("Using model in " + downloadFolder + model_name)
 
     model = tf.saved_model.load(export_dir=str(model_dir), tags=None)
     model = model.signatures['serving_default']
@@ -69,7 +72,7 @@ def load_model(model_name):
 
 
 def run_inference_for_single_image(model, image):
-    image = np.asarray(image)
+    image = np.array(Image.open(image))
     # The input needs to be a tensor, convert it using `tf.convert_to_tensor`.
     input_tensor = tf.convert_to_tensor(image)
     # The model expects a batch of images, so add an axis with `tf.newaxis`.
@@ -92,16 +95,14 @@ def run_inference_for_single_image(model, image):
     return output_dict
 
 
-def show_inference(model, image_path, saveResult=False, image_name="result.jpg"):
+def draw_bboxes(image_path, output_dict):
     # the array based representation of the image will be used later in order to prepare the
     # result image with boxes and labels on it.
-    image_np = np.array(Image.open(image_path))
+    image = np.array(Image.open(image_path))
 
-    # Actual detection.
-    output_dict = run_inference_for_single_image(model, image_np)
     # Visualization of the results of a detection.
     vis_util.visualize_boxes_and_labels_on_image_array(
-      image_np,
+      image,
       output_dict['detection_boxes'],
       output_dict['detection_classes'],
       output_dict['detection_scores'],
@@ -110,15 +111,20 @@ def show_inference(model, image_path, saveResult=False, image_name="result.jpg")
       use_normalized_coordinates=True,
       line_thickness=8)
 
-    if saveResult:
-        img = Image.fromarray(image_np)
-        outputFolder = os.getcwd() + '/results/'
-        if not os.path.exists(outputFolder):
-            os.makedirs(outputFolder)
-        outputPath = outputFolder + image_name
-        img.save(outputPath)
-        print("Result stored at " + outputPath)
+    return image
 
+def run_and_draw_bboxes(model, image_path):
+    output_dict = run_inference_for_single_image(model, image_path)
+    return draw_bboxes(image_path, output_dict)
+
+def save_image(image, name):
+    img = Image.fromarray(image)
+    outputFolder = os.getcwd() + cfg.RESULT_FOLDER
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+    outputPath = outputFolder + name
+    img.save(outputPath)
+    print("Result stored at " + outputPath)
 
 if __name__ == '__main__':
     # patch tf1 into `utils.ops`
@@ -127,19 +133,17 @@ if __name__ == '__main__':
     # Patch the location of gfile (needed in label_map_util, does not overwrite right know?)
     #tf.gfile = tf.io.gfile
 
-    model_name = 'faster_rcnn_inception_v2_coco_2018_01_28'
+    model_name = cfg.PRETRAINED_MODEL_NAME
     detection_model = load_model(model_name)
 
     # print("inputs: ", detection_model.inputs)
-
     # print("detection_model.output_dtypes: ", detection_model.output_dtypes)
-
     # print("detection_model.output_shapes: ", detection_model.output_shapes)
 
-    PATH_TO_TEST_IMAGES_DIR = pathlib.Path('./images')
-    TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*.jpg")))
+    PATH_TO_TEST_IMAGES_DIR = pathlib.Path(cfg.IMAGES_PATH)
+    TEST_IMAGE_PATHS = sorted(list(PATH_TO_TEST_IMAGES_DIR.glob("*." + cfg.IMAGES_TYPE)))
 
     for image_path in TEST_IMAGE_PATHS:
-        head, tail = os.path.split(image_path)
-        show_inference(detection_model, image_path, True, tail)
-
+        head, image_name = os.path.split(image_path)
+        processedImage = run_and_draw_bboxes(detection_model, image_path)
+        save_image(processedImage, image_name)
