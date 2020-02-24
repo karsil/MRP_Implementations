@@ -124,7 +124,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if(args.input_txt == None and args.output_tfrecord == None):
-        main(cfg.TRAIN.ANNOT_PATH, "tfrecords.record")
+        if not os.path.exists("data"):
+            os.makedirs("data")
+        main(cfg.TRAIN.ANNOT_PATH, cfg.TRAIN.RECORDS)
+        main(cfg.TEST.ANNOT_PATH, cfg.TEST.RECORDS)
     elif (args.input_txt == None or args.output_tfrecord == None):
         print("Illegal argument!")
         print("Please enter either both input dataset file and output file name or none (config file is then used).")
