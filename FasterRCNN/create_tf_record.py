@@ -119,11 +119,17 @@ def main(annotation_filepath, output_file):
 if __name__ == '__main__':
     # Taking command line arguments from users
     parser = argparse.ArgumentParser()
-    parser.add_argument('-in', '--input_txt', help='define the input dataset file (per line: path xmin ymin xmax ymax class-id)', type=str, required=True)
-    parser.add_argument('-out', '--output_tfrecord', help='define the output file ', type=str, required=True)
+    parser.add_argument('-in', '--input_txt', help='define the input dataset file (per line: path xmin ymin xmax ymax class-id)', type=str, required=False)
+    parser.add_argument('-out', '--output_tfrecord', help='define the output file ', type=str, required=False)
     args = parser.parse_args()
 
-    main(args.input_txt, args.output_tfrecord)
+    if(args.input_txt == None and args.output_tfrecord == None):
+        main(cfg.TRAIN.ANNOT_PATH, "tfrecords.record")
+    elif (args.input_txt == None or args.output_tfrecord == None):
+        print("Illegal argument!")
+        print("Please enter either both input dataset file and output file name or none (config file is then used).")
+    else:
+        main(args.input_txt, args.output_tfrecord)
 
 
 
