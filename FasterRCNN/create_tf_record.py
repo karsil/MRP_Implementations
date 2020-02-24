@@ -77,7 +77,7 @@ def create_tf_example(image_path, observations):
 
 def batch_tf_record_by_file(annotation_filepath, writer):
     annotations = []
-    with open(annotation_filepath) as f:
+    with tf.io.gfile.GFile(annotation_filepath) as f:
         annotations = [line.split() for line in f]
 
     lengthOfFixedElems = 1
@@ -104,7 +104,7 @@ def batch_tf_record_by_file(annotation_filepath, writer):
         writer.write(tf_example.SerializeToString())
 
 def main(annotation_filepath, output_file):
-    with open(cfg.FASTERRCNN.CLASSES) as f:
+    with tf.io.gfile.GFile(cfg.FASTERRCNN.CLASSES ) as f:
         global classLabels
         classLabels = [line for line in f]
 
