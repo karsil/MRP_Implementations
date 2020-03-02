@@ -78,7 +78,7 @@ def create_tf_example(image_path, observations):
 def batch_tf_record_by_file(annotation_filepath, writer):
     annotations = []
     with tf.io.gfile.GFile(annotation_filepath) as f:
-        annotations = [line.split() for line in f]
+        annotations = [line.replace(",", " ").split() for line in f]
 
     lengthOfFixedElems = 1
     lengthOfObservation = 5
