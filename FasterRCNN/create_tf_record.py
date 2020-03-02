@@ -20,6 +20,7 @@ from core.config import cfg
 from PIL import Image
 from utils import dataset_util
 import argparse
+from tqdm import tqdm
 
 # Will contain an array of class labels definied by cfg.FASTERRCNN.CLASSES
 classLabels = []
@@ -85,8 +86,7 @@ def batch_tf_record_by_file(annotation_filepath, writer):
     
     # Each element in 'annotations' is the line of the imported annotation file
     # Now deconstruct those annotation for n observations per line
-    for item in annotations:
-
+    for item in tqdm(annotations):
         filepath = item[0]
         observations = [item[1:6]]
 
@@ -113,7 +113,8 @@ def main(annotation_filepath, output_file):
     writer.close()
 
     output_path = os.path.join(os.getcwd(), output_file)
-    print('Successfully created the TFRecords: {}'.format(output_path))
+    print('Successfully created the TFR'
+          'ecords: {}'.format(output_path))
 
 
 if __name__ == '__main__':
@@ -126,7 +127,9 @@ if __name__ == '__main__':
     if(args.input_txt == None and args.output_tfrecord == None):
         if not os.path.exists("data"):
             os.makedirs("data")
+        print("Begin processing training data...")
         main(cfg.TRAIN.ANNOT_PATH, cfg.TRAIN.RECORDS)
+        print("Begin processing test data...")
         main(cfg.TEST.ANNOT_PATH, cfg.TEST.RECORDS)
     elif (args.input_txt == None or args.output_tfrecord == None):
         print("Illegal argument!")
