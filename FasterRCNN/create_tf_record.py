@@ -48,10 +48,10 @@ def create_tf_example(image_path, observations):
     classes = []
 
     for ob in observations:
-        xmins.append(int(ob[0]) / width)
-        xmaxs.append(int(ob[1]) / width)
-        ymins.append(int(ob[2]) / height)
-        ymaxs.append(int(ob[3]) / height)
+        xmins.append(float(ob[0]) / width)
+        xmaxs.append(float(ob[1]) / width)
+        ymins.append(float(ob[2]) / height)
+        ymaxs.append(float(ob[3]) / height)
 
         labelID = int(ob[4])
         classes.append(labelID)
