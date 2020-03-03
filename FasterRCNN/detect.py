@@ -206,8 +206,13 @@ def run_by_checkpoint_v1(detection_graph):
 
 def load_image_into_numpy_array(image):
   (im_width, im_height) = image.size
-  return np.array(image.getdata()).reshape(
+  if image.mode is 'RGB':
+    return np.array(image.getdata()).reshape(
       (im_height, im_width, 3)).astype(np.uint8)
+  elif image.mode is 'L':
+      # copy greyscale layer two times and stack all those to result in RGB
+      image = np.stack((image.getdata(),)*3, axis=-1)
+      return image.reshape((im_height, im_width, 3)).astype(np.uint8)
 
 if __name__ == '__main__':
 
