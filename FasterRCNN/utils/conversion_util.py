@@ -2,6 +2,7 @@ from PIL import Image
 import os
 import numpy as np
 import argparse
+from tqdm import tqdm
 
 def jpg_image_to_array(image_path):
     """
@@ -25,18 +26,25 @@ def greyscale_array_to_rgb_array(im_arr):
 if __name__ == '__main__':
     # Taking command line arguments from users
     parser = argparse.ArgumentParser()
-    parser.add_argument('-in', '--input_path', help='define the input file', type=str, required=True)
+    parser.add_argument('-in', '--input_folder', help='define the input folder', type=str, required=True)
+    parser.add_argument('-out', '--output_folder', help='define the output folder', type=str, required=True)
     args = parser.parse_args()
 
-    image = jpg_image_to_array(args.input_path)
-
-    img = Image.fromarray(image)
-    outputFolder = os.getcwd() + "/toRGB/"
+    outputFolder = os.path.join(os.getcwd(), args.output_folder)
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
 
-    _, image_name = os.path.split(args.input_path)
-    outputPath = outputFolder + image_name
-    img.save(outputPath)
-    print("Conversion to RGB stored at " + outputPath)
+    inputFolder = os.path.join(os.getcwd(), args.input_folder)
+    inputFiles = os.listdir(args.input_folder)
 
+    for filename in tqdm(inputFiles):
+        file = (os.path.join(inputFolder, filename))
+        image = jpg_image_to_array(file)
+
+        img = Image.fromarray(image)
+
+        _, image_name = os.path.split(args.input_folder)
+        outputPath = os.path.join(outputFolder, filename)
+        img.save(outputPath)
+
+    print("Conversion to " + outputFolder + " is done")
