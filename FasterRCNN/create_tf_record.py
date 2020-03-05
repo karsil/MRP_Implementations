@@ -14,8 +14,10 @@ from __future__ import absolute_import
 import os
 import io
 import tensorflow as tf
+import numpy as np
 
 from core.config import cfg
+from utils import conversion_util as conv_util
 
 from PIL import Image
 from utils import dataset_util
@@ -30,11 +32,12 @@ classLabels = []
     observations: List of observations for given image. One observation is [xmin, xmax, ymin, ymax, class-id]
 """
 def create_tf_example(image_path, observations):
-    with tf.io.gfile.GFile(image_path, 'rb') as fid:
-        encoded_jpg = fid.read()
-    encoded_jpg_io = io.BytesIO(encoded_jpg)
-    image = Image.open(encoded_jpg_io)
-    width, height = image.size
+    with Image.open(image_path) as image:
+        (width, height) = image.size
+        im_arr = np.frombuffer(image.tobytes(), dtype=np.uint8)
+        if image.mode is 'L':
+            im_arr = conv_util.greyscale_array_to_rgb_array(im_arr)
+        encoded_jpg = im_arr.reshape((height, width, 3)).tobytes()
 
     _, image_name = os.path.split(image_path)
     filename = image_name.encode('utf-8')
