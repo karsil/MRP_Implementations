@@ -8,7 +8,7 @@ import tarfile
 from PIL import Image
 import tensorflow as tf
 
-
+from utils import conversion_util
 from core.config import cfg
 
 from utils import label_map_util, visualization_utils as vis_util
@@ -182,10 +182,11 @@ def run_by_checkpoint_v1(detection_graph):
             num_detections = detection_graph.get_tensor_by_name('num_detections:0')
             for image_path in TEST_IMAGE_PATHS:
                 _, image_name = os.path.split(image_path)
-                image = Image.open(image_path)
+
                 # the array based representation of the image will be used later in order to prepare the
                 # result image with boxes and labels on it.
-                image_np = load_image_into_numpy_array(image)
+                image_np = np.array(conversion_util.jpg_image_to_array(image_path))
+
                 # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
                 image_np_expanded = np.expand_dims(image_np, axis=0)
                 # Actual detection.
@@ -202,17 +203,6 @@ def run_by_checkpoint_v1(detection_graph):
                     use_normalized_coordinates=True,
                     line_thickness=8)
                 save_image(image_np, image_name)
-
-
-def load_image_into_numpy_array(image):
-  (im_width, im_height) = image.size
-  if image.mode is 'RGB':
-    return np.array(image.getdata()).reshape(
-      (im_height, im_width, 3)).astype(np.uint8)
-  elif image.mode is 'L':
-      # copy greyscale layer two times and stack all those to result in RGB
-      image = np.stack((image.getdata(),)*3, axis=-1)
-      return image.reshape((im_height, im_width, 3)).astype(np.uint8)
 
 if __name__ == '__main__':
 
