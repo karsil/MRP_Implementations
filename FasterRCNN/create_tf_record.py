@@ -26,18 +26,19 @@ from tqdm import tqdm
 
 # Will contain an array of class labels definied by cfg.FASTERRCNN.CLASSES
 classLabels = []
-
 """
     image_path : String, containing the path to the image
     observations: List of observations for given image. One observation is [xmin, xmax, ymin, ymax, class-id]
 """
 def create_tf_example(image_path, observations):
-    with Image.open(image_path) as image:
-        (width, height) = image.size
-        im_arr = np.frombuffer(image.tobytes(), dtype=np.uint8)
-        if image.mode is 'L':
-            im_arr = conv_util.greyscale_array_to_rgb_array(im_arr)
-        encoded_jpg = im_arr.reshape((height, width, 3)).tobytes()
+    with tf.io.gfile.GFile(image_path, 'rb') as fid:
+        encoded_jpg = fid.read()
+
+    encoded_jpg_io = io.BytesIO(encoded_jpg)
+    image = Image.open(encoded_jpg_io)
+    (width, height) = image.size
+
+    assert image.mode is 'RGB', "Input data is expected to have three channels (RGB)! File, which caused the problem: " + str(image_path)
 
     _, image_name = os.path.split(image_path)
     filename = image_name.encode('utf-8')
