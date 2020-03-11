@@ -57,10 +57,11 @@ def create_tf_example(image_path, observations):
         ymins.append(float(ob[2]) / height)
         ymaxs.append(float(ob[3]) / height)
 
-        labelID = int(ob[4])
+        labelID = int(ob[4].encode('utf-8'))
         classes.append(labelID)
-        classes_text.append(classLabels[labelID].encode('utf8'))
 
+        className = classLabels[labelID].encode('utf-8').rstrip()
+        classes_text.append(className)
 
     tf_example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': dataset_util.int64_feature(height),
