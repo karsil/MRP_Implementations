@@ -52,12 +52,26 @@ def create_tf_example(image_path, observations):
     classes = []
 
     for ob in observations:
-        xmins.append(float(ob[0]) / width)
-        xmaxs.append(float(ob[1]) / width)
-        ymins.append(float(ob[2]) / height)
-        ymaxs.append(float(ob[3]) / height)
+        xmin = float(ob[0])
+        ymin = float(ob[1])
+        xmax = float(ob[2])
+        ymax = float(ob[3])
 
-        labelID = int(ob[4].encode('utf-8'))
+        assert xmin <= width, "Error: xmin is larger than image width: " + str(xmin) + " (width " + str(
+            width) + ") in " + str(filename)
+        assert xmax <= width, "Error: xmax is larger than image width: " + str(xmax) + " (width " + str(
+            width) + ") in " + str(filename)
+        assert ymin <= height, "Error: ymin is larger than image height: " + str(ymin) + " height " + str(
+            height) + ") in " + str(filename)
+        assert ymax <= height, "Error: ymax is larger than image height: " + str(ymax) + " height " + str(
+            height) + ") in " + str(filename)
+
+        xmins.append(xmin / width)
+        xmaxs.append(xmax / width)
+        ymins.append(ymin / height)
+        ymaxs.append(ymax / height)
+
+        labelID = int(ob[4])
         classes.append(labelID)
 
         className = classLabels[labelID].encode('utf-8').rstrip()
