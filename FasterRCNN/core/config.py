@@ -11,6 +11,9 @@ __C.FASTERRCNN                 = edict()
 __C.PRETRAINED_MODEL_NAME      = 'faster_rcnn_inception_v2_coco_2018_01_28'
 __C.PRETRAINED_MODEL_LABELS    = './mscoco_label_map.pbtxt'
 
+__C.TRAINED_MODEL_PATH         = "/Users/karsil/StudiumGit/MASTERPROJECT/MRP_Implementations/FasterRCNN/model"
+
+
 __C.DOWNLOADED_MODELS_FOLDER   = '/pretrained_models/'
 __C.SAVED_MODEL_SUBFOLDER      = 'saved_model'
 __C.RESULT_FOLDER              = "/results/"
