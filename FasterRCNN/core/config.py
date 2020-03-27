@@ -8,7 +8,7 @@ cfg                             = __C
 
 # Faster RCNN options
 __C.FASTERRCNN                 = edict()
-__C.PRETRAINED_MODEL_NAME      = 'faster_rcnn_inception_v2_coco_2018_01_28'
+__C.PRETRAINED_MODEL_NAME      = 'faster_rcnn_resnet50_coco_2018_01_28'
 __C.PRETRAINED_MODEL_LABELS    = './mscoco_label_map.pbtxt'
 
 __C.TRAINED_MODEL_PATH         = "/Users/karsil/StudiumGit/MASTERPROJECT/MRP_Implementations/FasterRCNN/model"
@@ -23,7 +23,7 @@ __C.IMAGES_TYPE                = 'jpg'
 
 # Set the class name
 __C.FASTERRCNN.CLASSES          = "./data/classes"
-__C.FASTERRCNN.LABELMAP         = "./data/label_map.pbtxt"
+__C.FASTERRCNN.LABELMAP         = "./data/ufo_label_map.pbtxt"
 
 # Train options
 __C.TRAIN                       = edict()
