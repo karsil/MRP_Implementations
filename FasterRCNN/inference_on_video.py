@@ -14,8 +14,8 @@ import srt
 from tqdm import tqdm
 
 from core.config import cfg
-import detect_util
-from utils import label_map_util, visualization_utils as vis_util
+from utils import detect_util
+from utils import label_map_util
 from utils import session_util
 
 def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frames = 0, srt_data = None,):
@@ -25,7 +25,7 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
 
     with tf.compat.v1.Session(graph=detection_graph) as sess:
 
-        image_tensor = session_util.get_input_tensor(detection_graph)
+        image_tensor = session_util.get_image_tensor(detection_graph)
         return_tensors = session_util.get_detection_tensors(detection_graph)
 
         print("Reading video: " + inputFile)
@@ -38,9 +38,9 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
         print(f"Begin processing of video with {maxFrames} frames...")
 
         # Set the frame counter
-        current_frame = skip_frames
-        if current_frame > 0:
-            vid.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+        iteration = skip_frames
+        if iteration > 0:
+            vid.set(cv2.CAP_PROP_POS_FRAMES, iteration)
 
         # progressbar
         pbar = tqdm(total=maxFrames)
@@ -48,14 +48,14 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
         while (vid.isOpened()):
 
             # Update progressbar to skipped frame on first iteration
-            if current_frame == skip_frames:
-                pbar.update(current_frame)
+            if iteration == skip_frames:
+                pbar.update(iteration)
 
             ret, frame = vid.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             else:
-                if (current_frame > 0):
+                if (iteration > 0):
                     # something has been processed earlier
                     print("Done. Quitting...")
                     break
@@ -65,39 +65,28 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
             (boxes, scores, classes, num) = detect_util.run_single_inference(sess, return_tensors, image_tensor, frame)
 
             # check, if detections has been found
-            score_threshold = 0.5
+            SCORE_THRESHOLD = 0.5
 
             scores = np.squeeze(scores)
             boxes = np.squeeze(boxes)
             classes = np.squeeze(classes)
 
-            frame_has_detection = False
-
-            # check, if there are any detections at all above threshold
+            detections_in_image = False
+            # Count detections in image
             for score in scores:
-                if scores is None or score >= score_threshold:
-                    frame_has_detection = True
-                    break
+                if scores is None or score >= SCORE_THRESHOLD:
+                    detections_in_image += 1
 
-            if frame_has_detection > 0:
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                    image,
-                    boxes,
-                    classes.astype(np.int32),
-                    scores,
-                    category_index,
-                    use_normalized_coordinates=True,
-                    line_thickness=8,
-                )
-
+            if detections_in_image > 0:
+                image = detect_util.draw_bboxes(image, boxes, classes, scores, category_index)
                 # saving as image
                 image = Image.fromarray(image)
                 # check if name is given
                 if srt_data:
-                    exportName = srt_data[current_frame].content
+                    exportName = srt_data[iteration].content
                 else:
-                    # use current frame index
-                    exportName = str(current_frame)
+                    # else use current frame index
+                    exportName = str(iteration)
 
                 filepath = targetFolder + "/" + exportName + ".jpg"
                 image.save(filepath)
@@ -105,7 +94,7 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
                 if log_output:
                     filepath_log = targetFolder + "/" + exportName + ".txt"
 
-                    detections = pack_detections(boxes, scores, classes, video_height, video_width, score_threshold)
+                    detections = pack_detections(boxes, scores, classes, video_height, video_width, SCORE_THRESHOLD)
 
                     # Save logfile for image
                     # Format: TopleftX, TopleftY, BottomRightX, BottomRightY, Class ID
@@ -117,7 +106,7 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
                                     class_id) + "\n")
 
             pbar.update(1)
-            current_frame = current_frame + 1
+            iteration = iteration + 1
 
         vid.release()
 
@@ -152,7 +141,7 @@ def pack_detections(box, scores, classes, video_height, video_width, threshold =
             break
 
         # ATTENTION: Watch order!
-        coord_boxes.append([xmin, ymin, xmax, ymax, class_id, scores[i] ])
+        coord_boxes.append([xmin, ymin, xmax, ymax, class_id, scores[i]])
     return coord_boxes
 
 
@@ -193,7 +182,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-video', '--input_video', help='Provide the path to a file with data')
     parser.add_argument('-srt', '--input_srt', help='Provide the path to a srt file for the given video')
-    parser.add_argument('-skip', '--skip_frames', help='Provide an amount of frames, which shall be skipped. The processing will began from this frame on.')
+    parser.add_argument('-skip', '--skip_frames', type=int, default=int(0),help='Provide an amount of frames, which shall be skipped. The processing will began from this frame on.')
     parser.add_argument('-log', action='store_true')
     args = parser.parse_args()
 
