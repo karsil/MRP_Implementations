@@ -36,7 +36,7 @@ def inference_on_image(sess, return_tensors, image_tensor, image_path, minimum_d
 
     if detections_in_image > minimum_detections:
         print(image_np.shape)
-        (width, height) = image_np.shape
+        (height, width, _) = image_np.shape
         return detect_util.pack_detections(
             boxes,
             scores,
@@ -45,6 +45,8 @@ def inference_on_image(sess, return_tensors, image_tensor, image_path, minimum_d
             width,
             SCORE_THRESHOLD
         )
+    else:
+        return []
 
 
 def main():
@@ -72,16 +74,15 @@ def main():
             with open(filepath_log, "w") as logfile:
                 for entry in tqdm(annotations):
                     image_path = entry[0]
-                    print(image_path)
                     detections = inference_on_image(sess, return_tensors, image_tensor, image_path, store_logs)
 
+                    # Format (concatted detections), e.g.:
+                    # IMG_PATH xmin1,ymin1,xmax1,ymax1,class1 xmin2,ymin2,xmax2,ymax2,class2
                     logfile.write(str(image_path) + " ")
-                    # Save logfile for image
-                    # Format: TopleftX, TopleftY, BottomRightX, BottomRightY, Class ID
                     for detection in detections:
                         (xmin, ymin, xmax, ymax, class_id, score) = detection
                         logfile.write(
-                            str(xmin) + ", " + str(ymin) + ", " + str(xmax) + ", " + str(ymax) + ", " + str(
+                            str(xmin) + "," + str(ymin) + "," + str(xmax) + "," + str(ymax) + "," + str(
                                 class_id) + " ")
                     logfile.write("\n")
 
