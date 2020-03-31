@@ -3,6 +3,17 @@ import os
 import numpy as np
 import argparse
 from tqdm import tqdm
+import tensorflow as tf
+
+def read_annotations(annotation_path):
+    annotations = []
+
+    assert tf.io.gfile.exists(annotation_path), "Error: Annotation file does not exists: " + str(annotation_path)
+
+    with tf.io.gfile.GFile(annotation_path) as f:
+        annotations = [line.replace(",", " ").split() for line in f]
+    
+    return annotations
 
 def jpg_image_to_array(image_path):
     """
