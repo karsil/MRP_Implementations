@@ -67,11 +67,10 @@ def pack_detections(box, scores, classes, video_height, video_width, threshold =
     n_boxes, field_boxes = box.shape
     assert field_boxes == 4, "Error: Bounding boxes should have 4 coordinates, has " + str(field_boxes)
 
-    n_scores, field_scores = scores.shape
+    n_scores = scores.shape[0]
     assert n_scores == n_boxes, "Error: " + str(n_scores) + " scores returned, should equal to " + str(n_boxes) + " boxes"
 
-    n_classes, field_classes = classes.shape
-    assert field_classes == 1, "Error: More than one label found"
+    n_classes = classes.shape[0]
     assert n_classes == n_scores, "Error: " + str(n_classes) + " classes returned, should equal to " + str(n_scores) + " boxes"
 
     # extract coordinates
