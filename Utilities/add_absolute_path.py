@@ -7,6 +7,7 @@ import os
 import re
 
 TUPLE_LENGTH = 5
+logger = None
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -52,11 +53,16 @@ def cleanup_values(annotations):
         xmax = int(float(detection[2]))
         ymax = int(float(detection[3]))
 
+        # TODO: Use assert
         x_error_msg = "Dataset error: xmin is larger than xmax: " + str(detection) + " for " + filename
-        assert xmin < xmax, xmin_error_msg
+        if not xmin < xmax:
+            print(x_error_msg)
+            logger.write(x_error_msg + "\n")
 
         y_error_msg = "Dataset error: ymin is larger than ymax: " + str(detection) + " for " + filename
-        assert ymin < ymax, y_error_msg
+        if not ymin < ymax:
+            print(y_error_msg)
+            logger.write(y_error_msg + "\n")
 
     
     def assert_dataset(annotations):
@@ -68,7 +74,9 @@ def cleanup_values(annotations):
                 assert_bbox_range(detection, filename)
                 #print(",".join(detection))
                 read_elems = read_elems + TUPLE_LENGTH
-        print("Dataset has correct bounding boxes")
+
+        # TODO: Use this, when assert is again implemented
+        #print("Dataset has correct bounding boxes")
 
     def remove_linebreak(str):
         return str.replace("\n","")
@@ -76,9 +84,12 @@ def cleanup_values(annotations):
     def remove_floating_point(str_num):
         return str(int(float(str_num)))
 
-    def check_and_set_negative_values_to_zero(str_num):
+    def check_and_set_negative_values_to_one(str_num, filename = None):
         if int(str_num) < 0:
-            print("Warning: Coordinate has negative value " + str_num + ", changing to 1...")
+            postfix = filename if filename else ""
+            error_msg = "Warning: Coordinate has negative value " + str_num + ", changing to 1..." + postfix
+            print(error_msg)
+            logger.write(error_msg + "\n")
             str_num = "1"
         return str_num
 
@@ -88,9 +99,7 @@ def cleanup_values(annotations):
         for j, coord in enumerate(annot[1:]):
             annotations[i][j + 1] = remove_linebreak(annotations[i][j + 1])
             annotations[i][j + 1] = remove_floating_point(annotations[i][j + 1])
-            annotations[i][j + 1] = check_and_set_negative_values_to_zero(annotations[i][j + 1])
-
-    assert_dataset(annotations)
+            annotations[i][j + 1] = check_and_set_negative_values_to_one(annotations[i][j + 1], annotations[i][0])
 
     return annotations
 
@@ -105,5 +114,12 @@ def process(source_file, folder_path, target_file):
 if __name__ == "__main__":
     args = parse_args()
 
+    logger_path = "log_" + args.output
+    logger = open(logger_path, "wt")
+
     process(args.input, args.folder, args.output)
+
+    logger.close()
+    print("Wrote logfile to " + logger_path)
+    print("Please check logfile to verify result even if program returns no error")
 
