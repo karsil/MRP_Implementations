@@ -5,6 +5,7 @@
 import argparse
 import os
 import re
+from PIL import Image
 
 TUPLE_LENGTH = 5
 logger = None
@@ -54,15 +55,28 @@ def cleanup_values(annotations):
         ymax = int(float(detection[3]))
 
         # TODO: Use assert
-        x_error_msg = "Dataset error: xmin is larger than xmax: " + str(detection) + " for " + filename
+        x_error_msg = "Dataset: xmin is larger than xmax: " + str(detection) + " for " + filename
         if not xmin < xmax:
             print(x_error_msg)
             logger.write(x_error_msg + "\n")
 
-        y_error_msg = "Dataset error: ymin is larger than ymax: " + str(detection) + " for " + filename
+        y_error_msg = "Dataset: ymin is larger than ymax: " + str(detection) + " for " + filename
         if not ymin < ymax:
             print(y_error_msg)
             logger.write(y_error_msg + "\n")
+
+        
+        img = Image.open(filename)
+        width, height = img.size
+        msg = "Dataset: xmax " + str(xmax) + " higher than image width: " + str(width) + ": " + filename
+        if not xmax <= width:
+            print(msg)
+            logger.write(msg + "\n")
+
+        msg = "Dataset: ymax " + str(ymax) + " higher than image height: " + str(height) + ": " + filename
+        if not ymax <= height:
+            print(msg)
+            logger.write(msg + "\n")
 
     
     def assert_dataset(annotations):
@@ -99,7 +113,7 @@ def cleanup_values(annotations):
         for j, coord in enumerate(annot[1:]):
             annotations[i][j + 1] = remove_linebreak(annotations[i][j + 1])
             annotations[i][j + 1] = remove_floating_point(annotations[i][j + 1])
-            annotations[i][j + 1] = check_and_set_negative_values_to_one(annotations[i][j + 1], annotations[i][0])
+            #annotations[i][j + 1] = check_and_set_negative_values_to_one(annotations[i][j + 1], annotations[i][0])
 
     return annotations
 
