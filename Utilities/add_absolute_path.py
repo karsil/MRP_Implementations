@@ -42,7 +42,7 @@ def add_absolute_path_before_first_element(annots, folder):
     abs_path = str(os.path.abspath(folder))
 
     for i, annot in enumerate(annots):
-        new_filepath = abs_path + "/"  + annots[i][0]
+        new_filepath = os.path.join(abs_path, annots[i][0])
         assert_path_exists(new_filepath)
         annots[i][0] = new_filepath
     return annots
@@ -128,7 +128,8 @@ def process(source_file, folder_path, target_file):
 if __name__ == "__main__":
     args = parse_args()
 
-    logger_path = "log_" + args.output
+    head, tail = os.path.basename(args.output)
+    logger_path = os.path.join(head, "log_" + tail)
     logger = open(logger_path, "wt")
 
     process(args.input, args.folder, args.output)
