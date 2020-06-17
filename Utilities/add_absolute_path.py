@@ -117,6 +117,11 @@ def cleanup_values(annotations):
 
     return annotations
 
+def create_log_path(relative_output_path):
+    output = os.path.abspath(args.output)
+    head, tail = os.path.split(args.output)
+    return os.path.join(head, "log_" + tail)
+
 def process(source_file, folder_path, target_file):
     
     annots = read_file(source_file)
@@ -128,8 +133,7 @@ def process(source_file, folder_path, target_file):
 if __name__ == "__main__":
     args = parse_args()
 
-    head, tail = os.path.basename(args.output)
-    logger_path = os.path.join(head, "log_" + tail)
+    logger_path = create_log_path(args.output)
     logger = open(logger_path, "wt")
 
     process(args.input, args.folder, args.output)
