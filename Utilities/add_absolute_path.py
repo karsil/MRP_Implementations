@@ -113,7 +113,7 @@ def cleanup_values(annotations):
         for j, coord in enumerate(annot[1:]):
             annotations[i][j + 1] = remove_linebreak(annotations[i][j + 1])
             annotations[i][j + 1] = remove_floating_point(annotations[i][j + 1])
-            #annotations[i][j + 1] = check_and_set_negative_values_to_one(annotations[i][j + 1], annotations[i][0])
+            annotations[i][j + 1] = check_and_set_negative_values_to_one(annotations[i][j + 1], annotations[i][0])
 
     return annotations
 
