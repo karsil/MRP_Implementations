@@ -9,7 +9,6 @@ from PIL import Image
 import os
 import sys
 import argparse
-from datetime import datetime
 import srt
 from tqdm import tqdm
 
@@ -71,7 +70,7 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
             boxes = np.squeeze(boxes)
             classes = np.squeeze(classes)
 
-            detections_in_image = False
+            detections_in_image = 0
             # Count detections in image
             for score in scores:
                 if scores is None or score >= SCORE_THRESHOLD:
@@ -94,7 +93,7 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
                 if log_output:
                     filepath_log = targetFolder + "/" + exportName + ".txt"
 
-                    detections = pack_detections(boxes, scores, classes, video_height, video_width, SCORE_THRESHOLD)
+                    detections = detect_util.pack_detections(boxes, scores, classes, video_height, video_width, SCORE_THRESHOLD)
 
                     # Save logfile for image
                     # Format: TopleftX, TopleftY, BottomRightX, BottomRightY, Class ID
@@ -110,73 +109,6 @@ def run(detection_graph, inputFile, targetFolder, log_output = False, skip_frame
 
         vid.release()
 
-def pack_detections(box, scores, classes, video_height, video_width, threshold = 0.5):
-    n_boxes, field_boxes = box.shape
-    assert field_boxes == 4, "Error: Bounding boxes should have 4 coordinates, has " + field_boxes
-
-    n_scores, field_scores = scores.shape
-    assert n_scores == n_boxes, "Error: " + n_scores + " scores returned, should equal to " + n_boxes + " boxes"
-
-    n_classes, field_classes = classes.shape
-    assert field_classes == 1, "Error: More than one label found"
-    assert n_classes == n_scores, "Error: " + n_classes + " classes returned, should equal to " + n_scores + " boxes"
-
-    # extract coordinates
-    coord_boxes = []
-    for i, b in enumerate(box):
-        # no need to process boxes under given threshold
-        if scores[i] < threshold:
-            continue
-
-        # transform relative values to pixel values
-        ymin = int(b[0] * video_height)
-        xmin = int(b[1] * video_width)
-        ymax = int(b[2] * video_height)
-        xmax = int(b[3] * video_width)
-
-        class_id = int(classes[i])
-
-        if ymin == 0 and xmin == 0 and ymax == 0 and xmax == 0:
-            # images does not contain any more detections (rest is 0)
-            break
-
-        # ATTENTION: Watch order!
-        coord_boxes.append([xmin, ymin, xmax, ymax, class_id, scores[i]])
-    return coord_boxes
-
-
-# returns absolute path of newly created target folder
-def createTargetFolder(inputFile):
-    now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-
-    # Saving files into folder 'inputFilename_%Y-%m-%d_%H:%M:%S'
-    sourcePathAbs = os.path.abspath(inputFile)
-    sourceFileHead, sourceFileTail = os.path.split(sourcePathAbs)
-    outputPath = sourceFileTail + "_" + now
-    targetFolder = sourceFileHead + "/" + outputPath
-
-    try:
-        os.mkdir(targetFolder)
-        print("Target directory ", targetFolder, " created")
-    except FileExistsError:
-        print("Target directory ", targetFolder, " already exists...")
-
-    return targetFolder
-
-def read_srt_file(srt_file):
-    if not os.path.exists(srt_file):
-        print(f"The srt file {srt_file} does not exist. Quitting...")
-        sys.exit()
-
-    print(f"Using SRT file at: {srt_file}")
-
-    # Reading srt file
-    with open(srt_file, 'r') as f:
-        data = f.read()
-    srt_generator = srt.parse(data)
-    srt_data = list(srt_generator)
-    print(f"Constructed generator with {len(srt_data)} entries")
-    return srt_data
 
 def main():
     parser = argparse.ArgumentParser()
@@ -192,9 +124,9 @@ def main():
         print(f"The video file {inputFile} does not exist. Quitting...")
         sys.exit()
 
-    srt_data = read_srt_file(args.input_srt)
+    srt_data = detect_util.read_srt_file(args.input_srt)
 
-    targetFolder = createTargetFolder(inputFile)
+    targetFolder = detect_util.createTargetFolder(inputFile)
 
     detection_graph = detect_util.import_graph(cfg.TRAINED_MODEL_PATH)
 

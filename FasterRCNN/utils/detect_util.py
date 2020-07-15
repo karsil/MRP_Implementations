@@ -5,6 +5,7 @@ import pathlib
 import os
 
 import tarfile
+from datetime import datetime
 from PIL import Image
 
 from utils import conversion_util
@@ -29,6 +30,71 @@ from utils import label_map_util, visualization_utils as vis_util
 PATH_TO_LABELS = cfg.PRETRAINED_MODEL_LABELS
 category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
+def read_srt_file(srt_file):
+    if not os.path.exists(srt_file):
+        print(f"The srt file {srt_file} does not exist. Quitting...")
+        sys.exit()
+
+    print(f"Using SRT file at: {srt_file}")
+
+    # Reading srt file
+    with open(srt_file, 'r') as f:
+        data = f.read()
+    srt_generator = srt.parse(data)
+    srt_data = list(srt_generator)
+    print(f"Constructed generator with {len(srt_data)} entries")
+    return srt_data
+
+# returns absolute path of newly created target folder
+def createTargetFolder(inputFile):
+    now = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+
+    # Saving files into folder 'inputFilename_%Y-%m-%d_%H:%M:%S'
+    sourcePathAbs = os.path.abspath(inputFile)
+    sourceFileHead, sourceFileTail = os.path.split(sourcePathAbs)
+    outputPath = sourceFileTail + "_" + now
+    targetFolder = sourceFileHead + "/" + outputPath
+
+    try:
+        os.mkdir(targetFolder)
+        print("Target directory ", targetFolder, " created")
+    except FileExistsError:
+        print("Target directory ", targetFolder, " already exists...")
+
+    return targetFolder
+
+def pack_detections(box, scores, classes, video_height, video_width, threshold = 0.5):
+    n_boxes, field_boxes = box.shape
+    assert field_boxes == 4, "Error: Bounding boxes should have 4 coordinates, has " + str(field_boxes)
+
+    n_scores = scores.shape[0]
+    assert n_scores == n_boxes, "Error: " + str(n_scores) + " scores returned, should equal to " + str(n_boxes) + " boxes"
+
+    n_classes = classes.shape[0]
+    assert n_classes == n_scores, "Error: " + str(n_classes) + " classes returned, should equal to " + str(n_scores) + " boxes"
+
+    # extract coordinates
+    coord_boxes = []
+    for i, b in enumerate(box):
+        # no need to process boxes under given threshold
+        if scores[i] < threshold:
+            continue
+
+        # transform relative values to pixel values
+        ymin = int(b[0] * video_height)
+        xmin = int(b[1] * video_width)
+        ymax = int(b[2] * video_height)
+        xmax = int(b[3] * video_width)
+
+        class_id = int(classes[i])
+
+        if ymin == 0 and xmin == 0 and ymax == 0 and xmax == 0:
+            # images does not contain any more detections (rest is 0)
+            break
+
+        # ATTENTION: Watch order!
+        coord_boxes.append([xmin, ymin, xmax, ymax, class_id, scores[i]])
+    return coord_boxes
 
 def load_graph(frozen_graph_filename):
     # We load the protobuf file from the disk and parse it to retrieve the
@@ -210,11 +276,11 @@ def run_by_checkpoint_v1(detection_graph):
 
                 (boxes, scores, classes, num) = run_single_inference(sess, return_tensors, image_tensor, image_np)
 
-                image_np = draw_bboxes(image_np, boxes, classes, scores, category_index)
+                image_np = draw_bboxes_on_image(image_np, boxes, classes, scores, category_index)
 
                 save_image(image_np, image_name)
 
-def draw_bboxes(image_np, boxes, classes, scores, category_index):
+def draw_bboxes_on_image(image_np, boxes, classes, scores, category_index):
     # Visualization of the results of a detection.
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
@@ -407,6 +473,6 @@ def run_by_checkpoint_v1(detection_graph):
 
                 (boxes, scores, classes, num) = run_single_inference(sess, return_tensors, image_tensor, image_np)
 
-                image_np = draw_bboxes(image_np, boxes, classes, scores, category_index)
+                image_np = draw_bboxes_on_image(image_np, boxes, classes, scores, category_index)
 
                 save_image(image_np, image_name)
