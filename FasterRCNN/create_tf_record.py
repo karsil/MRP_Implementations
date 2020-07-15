@@ -17,7 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 from core.config import cfg
-from utils import conversion_util as conv_util
+from utils import conversion_util
 
 from PIL import Image
 from utils import dataset_util
@@ -97,9 +97,7 @@ def create_tf_example(image_path, observations):
 
 
 def batch_tf_record_by_file(annotation_filepath, writer):
-    annotations = []
-    with tf.io.gfile.GFile(annotation_filepath) as f:
-        annotations = [line.replace(",", " ").split() for line in f]
+    annotations = conversion_util.read_annotations(annotation_filepath)
 
     lengthOfFixedElems = 1
     lengthOfObservation = 5
