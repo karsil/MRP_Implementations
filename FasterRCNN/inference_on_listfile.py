@@ -13,6 +13,7 @@ import tensorflow as tf
 from PIL import Image
 from tqdm import tqdm
 
+SCORE_THRESHOLD = 0.5
 
 def inference_on_image(sess, return_tensors, image_tensor, image_path, minimum_detections=1):
     image_np = np.array(conversion_util.jpg_image_to_array(image_path))
@@ -27,7 +28,6 @@ def inference_on_image(sess, return_tensors, image_tensor, image_path, minimum_d
     classes = np.squeeze(classes)
 
     # check, if detections has been found
-    SCORE_THRESHOLD = 0.5
     detections_in_image = 0
     # Count detections in image
     for score in scores:
@@ -35,7 +35,6 @@ def inference_on_image(sess, return_tensors, image_tensor, image_path, minimum_d
             detections_in_image += 1
 
     if detections_in_image > minimum_detections:
-        print(image_np.shape)
         (height, width, _) = image_np.shape
         return detect_util.pack_detections(
             boxes,
@@ -74,19 +73,18 @@ def main():
             with open(filepath_log, "w") as logfile:
                 for entry in tqdm(annotations):
                     image_path = entry[0]
-                    detections = inference_on_image(sess, return_tensors, image_tensor, image_path, store_logs)
 
-                    # Format (concatted detections), e.g.:
+                    # detections = (xmin, ymin, xmax, ymax, class_id, score)
+                    detections = inference_on_image(sess, return_tensors, image_tensor, image_path, store_logs)
+                    
+                    # Saving format (concatted detections), e.g.:
                     # IMG_PATH xmin1,ymin1,xmax1,ymax1,class1 xmin2,ymin2,xmax2,ymax2,class2
                     logfile.write(str(image_path) + " ")
                     for detection in detections:
-                        (xmin, ymin, xmax, ymax, class_id, score) = detection
-                        logfile.write(
-                            str(xmin) + "," + str(ymin) + "," + str(xmax) + "," + str(ymax) + "," + str(
-                                class_id) + " ")
+                        logfile.write(",".join(str(val) for val in detection[0:5]) + " ")
                     logfile.write("\n")
 
-    print(f"Done! files have been saved to folder ", targetFolder)
+    print(f"Done! Files have been saved to folder ", targetFolder)
 
 
 if __name__ == "__main__":
