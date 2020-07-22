@@ -36,12 +36,16 @@ def create_tf_example(image_path, observations):
 
     encoded_jpg_io = io.BytesIO(encoded_jpg)
     image = Image.open(encoded_jpg_io)
-    (width, height) = image.size
 
-    assert image.mode is 'RGB', "Input data is expected to have three channels (RGB)! File, which caused the problem: " + str(image_path)
+    if image.mode is 'L':
+        image = conversion_util.jpg_image_to_array(image_path)
+        image = Image.fromarray(image)
+
+    assert image.mode == 'RGB', "Input data is expected to have three channels (RGB) but has {}. Error-causing file: {}".format(image.mode, str(image_path))
 
     _, image_name = os.path.split(image_path)
     filename = image_name.encode('utf-8')
+    (width, height) = image.size
 
     image_format = str.encode(cfg.IMAGES_TYPE)
     xmins = []
