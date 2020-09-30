@@ -4,3 +4,14 @@ pyenv/
 
 __pycache__
 */*/__pycache__/*
+*.record
+*.log
+FasterRCNN/inference_graph/*
+checkpoint
+*.index
+*.meta
+*.data-*
+events.out.tfevents.*
+results/
+model*/
+*.pb
