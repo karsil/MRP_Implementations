@@ -1,6 +1,7 @@
 pyenv/
+venv/
 .vscode
-*/*/.vscode/
+tmp*
 
 __pycache__
 */*/__pycache__/*
