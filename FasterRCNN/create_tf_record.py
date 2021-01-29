@@ -37,11 +37,17 @@ def create_tf_example(image_path, observations):
     encoded_jpg_io = io.BytesIO(encoded_jpg)
     image = Image.open(encoded_jpg_io)
 
-    if image.mode is 'L':
-        image = conversion_util.jpg_image_to_array(image_path)
-        image = Image.fromarray(image)
+    num_channels = 1
+    # if image.mode is 'L':
+        # image_arr = conversion_util.jpg_image_to_array(image_path)
+        # encoded_jpg = image_arr.tostring()
+        # image = Image.fromarray(image_arr)
 
-    assert image.mode == 'RGB', "Input data is expected to have three channels (RGB) but has {}. Error-causing file: {}".format(image.mode, str(image_path))
+    #assert image.mode == 'RGB', "Input data is expected to have three channels (RGB) but has {}. Error-causing file: {}".format(image.mode, str(image_path))
+
+    # with io.BytesIO() as output:
+    #     image.save(output, 'PNG')
+    #     encoded_jpg = output.getvalue()
 
     _, image_name = os.path.split(image_path)
     filename = image_name.encode('utf-8')
@@ -86,7 +92,7 @@ def create_tf_example(image_path, observations):
         'image/width': dataset_util.int64_feature(width),
         'image/filename': dataset_util.bytes_feature(filename),
         'image/source_id': dataset_util.bytes_feature(filename),
-        'image/channels': dataset_util.int64_feature(3),
+        'image/channels': dataset_util.int64_feature(num_channels),
         'image/encoded': dataset_util.bytes_feature(encoded_jpg),
         'image/format': dataset_util.bytes_feature(image_format),
         'image/object/bbox/xmin': dataset_util.float_list_feature(xmins),

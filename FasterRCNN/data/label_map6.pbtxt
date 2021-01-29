@@ -1,0 +1,29 @@
+item {
+    id: 1
+    name: 'fish_clupeidae'
+}
+
+item {
+    id: 2
+    name: 'jellyfish_aurelia'
+}
+
+item {
+    id: 3
+    name: 'fish_unspecified'
+}
+
+item {
+    id: 4
+    name: 'fish_cod'
+}
+
+item {
+    id: 5
+    name: 'fish_herring'
+}
+
+item {
+    id: 6
+    name: 'jellyfish_unspecified'
+}

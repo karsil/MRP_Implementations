@@ -22,23 +22,18 @@ __C.IMAGES_PATH                = './images'
 __C.IMAGES_TYPE                = 'jpg'
 
 # Set the class name
-__C.FASTERRCNN.CLASSES          = "./data/classes"
-__C.FASTERRCNN.LABELMAP         = "/home/jsteeg/MRP_Implementations/FasterRCNN/data/ufo_label_map.pbtxt"
+__C.FASTERRCNN.CLASSES          = "/home/jsteeg/ufo_data/yolo_no_crop_vc/classes"
+__C.FASTERRCNN.LABELMAP         = "/home/jsteeg/ufo_data/yolo_no_crop_vc/label_map.txt"
 
 # Train options
 __C.TRAIN                       = edict()
 
-__C.TRAIN.ANNOT_PATH            = "./data/annotations.txt"
-__C.TRAIN.RECORDS               = "data/train.record"
+__C.TRAIN.ANNOT_PATH            = "/home/jsteeg/ufo_data/yolo_no_crop_vc/train.txt"
+__C.TRAIN.RECORDS               = "/home/jsteeg/ufo_data/yolo_no_crop_vc/train.tfrecord"
 
 # TEST options
 __C.TEST                        = edict()
 
-__C.TEST.ANNOT_PATH             = "./data/annotations.txt"
-__C.TEST.RECORDS               = "data/test.record"
-
-
-
-
-
+__C.TEST.ANNOT_PATH            = "/home/jsteeg/ufo_data/yolo_no_crop_vc/test.txt"
+__C.TEST.RECORDS               = "/home/jsteeg/ufo_data/yolo_no_crop_vc/test.tfrecord"
 
